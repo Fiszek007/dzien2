@@ -1,6 +1,6 @@
-CREATE OR REPLACE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
-    login VARCHAR(50) UNIQUE NOT NULL, -- New column for login/username
+    login VARCHAR(50) UNIQUE NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -14,34 +14,31 @@ INSERT INTO users (user_id, login, first_name, last_name, email, phone_number, p
 VALUES
     (1, 'admin', 'Admin', 'User', 'admin@example.com', '1234567890', 'admin_hashed_password', 'Admin'),
     (2, 'testuser', 'Test', 'User', 'test_user@example.com', '0987654321', 'test_user_hashed_password', 'User');
-    
-    
 
 -- Table for cities
-CREATE OR REPLACE TABLE cities (
+CREATE TABLE IF NOT EXISTS cities (
     city_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     country VARCHAR(100) NOT NULL
 );
 
 -- Table for airports
-CREATE OR REPLACE TABLE airports (
+CREATE TABLE IF NOT EXISTS airports (
     airport_code VARCHAR(10) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    city_id INT NOT NULL, -- Foreign key to cities
+    city_id INT NOT NULL,
     FOREIGN KEY (city_id) REFERENCES cities(city_id)
 );
 
--- Table for airlinesavia_tickets
-CREATE OR REPLACE TABLE airlines (
+-- Table for airlines
+CREATE TABLE IF NOT EXISTS airlines (
     airline_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     iata_code VARCHAR(10) UNIQUE NOT NULL
 );
 
-
 -- Junction table for airports and airlines (many-to-many)
-CREATE OR REPLACE TABLE airport_airlines (
+CREATE TABLE IF NOT EXISTS airport_airlines (
     airport_code VARCHAR(10) NOT NULL,
     airline_id INT NOT NULL,
     PRIMARY KEY (airport_code, airline_id),
@@ -50,14 +47,14 @@ CREATE OR REPLACE TABLE airport_airlines (
 );
 
 -- Table for flights
-CREATE OR REPLACE TABLE flights (
+CREATE TABLE IF NOT EXISTS flights (
     flight_id INT PRIMARY KEY AUTO_INCREMENT,
     flight_number VARCHAR(10) NOT NULL UNIQUE,
     departure_airport VARCHAR(10) NOT NULL,
     arrival_airport VARCHAR(10) NOT NULL,
     departure_time DATETIME NOT NULL,
     arrival_time DATETIME NOT NULL,
-    airline_id INT NOT NULL, -- Foreign key to airlines
+    airline_id INT NOT NULL,
     aircraft_type VARCHAR(50),
     FOREIGN KEY (departure_airport) REFERENCES airports(airport_code),
     FOREIGN KEY (arrival_airport) REFERENCES airports(airport_code),
@@ -65,7 +62,7 @@ CREATE OR REPLACE TABLE flights (
 );
 
 -- Table for bookings
-CREATE OR REPLACE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
     booking_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     booking_date DATETIME NOT NULL,
@@ -76,7 +73,7 @@ CREATE OR REPLACE TABLE bookings (
 );
 
 -- Table for tickets
-CREATE OR REPLACE TABLE tickets (
+CREATE TABLE IF NOT EXISTS tickets (
     ticket_id INT PRIMARY KEY AUTO_INCREMENT,
     booking_id INT NOT NULL,
     flight_id INT NOT NULL,
@@ -87,7 +84,7 @@ CREATE OR REPLACE TABLE tickets (
 );
 
 -- Table for payments
-CREATE OR Replace TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
     payment_id INT PRIMARY KEY AUTO_INCREMENT,
     booking_id INT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
@@ -95,32 +92,26 @@ CREATE OR Replace TABLE payments (
     status ENUM('Completed', 'Failed', 'Pending') NOT NULL,
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
 );
+
 -- Table for luggage
-CREATE OR REPLACE TABLE luggage (
+CREATE TABLE IF NOT EXISTS luggage (
     luggage_id INT PRIMARY KEY AUTO_INCREMENT,
     ticket_id INT NOT NULL,
     weight DECIMAL(5, 2) NOT NULL,
     type ENUM('Checked-in', 'Hand') NOT NULL,
     FOREIGN KEY (ticket_id) REFERENCES tickets(ticket_id)
 );
-CREATE Or replace TABLE messages (
+
+-- Table for messages
+CREATE TABLE IF NOT EXISTS messages (
     message_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT, -- NULL if the user is not logged in
-    name VARCHAR(100) NOT NULL, -- For non-logged-in users
+    user_id INT,
+    name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
     subject VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
-);
-
-CREATE OR REPLACE TABLE messages (
-    message_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    subject VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insert data into cities table
@@ -140,49 +131,19 @@ VALUES
 -- Insert data into airports table
 INSERT INTO airports (airport_code, name, city_id)
 VALUES
-('FRA', 'Frankfurt Airport', 3),  -- Frankfurt (Germany)
-('CGH', 'Congonhas Airport', 2), -- Paris (France)
-('MAD', 'Madrid-Barajas Airport', 5), -- Madrid (Spain)
-('AMS', 'Amsterdam Airport Schiphol', 4), -- Amsterdam (Netherlands)
-('LHR', 'Heathrow Airport', 1), -- London (UK)
-('CDG', 'Charles de Gaulle Airport', 2), -- Paris (France)
-('ROM', 'Rome Fiumicino Airport', 6), -- Rome (Italy)
-('PRG', 'Václav Havel Airport Prague', 7), -- Prague (Czech Republic)
-('BRU', 'Brussels Airport', 9), -- Brussels (Belgium)
-('VIE', 'Vienna International Airport', 8), -- Vienna (Austria)
-('WAW', 'Warsaw Chopin Airport', 10); -- Warsaw (Poland)
+('FRA', 'Frankfurt Airport', 3),
+('CGH', 'Congonhas Airport', 2),
+('MAD', 'Madrid-Barajas Airport', 5),
+('AMS', 'Amsterdam Airport Schiphol', 4),
+('LHR', 'Heathrow Airport', 1),
+('CDG', 'Charles de Gaulle Airport', 2),
+('ROM', 'Rome Fiumicino Airport', 6),
+('PRG', 'Václav Havel Airport Prague', 7),
+('BRU', 'Brussels Airport', 9),
+('VIE', 'Vienna International Airport', 8),
+('WAW', 'Warsaw Chopin Airport', 10);
 
 -- Insert data into airlines table
-
--- Insert data into airport_airlines (many-to-many) table
-INSERT INTO airport_airlines (airport_code, airline_id)
-VALUES
-('LHR', 1), ('LHR', 2), ('LHR', 3), -- London (British Airways, Air France, Lufthansa)
-('CDG', 2), ('CDG', 3), ('CDG', 4), -- Paris (Air France, Lufthansa, KLM)
-('FRA', 3), ('FRA', 5), -- Frankfurt (Lufthansa, Iberia)
-('AMS', 4), ('AMS', 5), -- Amsterdam (KLM, Iberia)
-('MAD', 5), ('MAD', 6), -- Madrid (Iberia, Alitalia)
-('ROM', 6), ('ROM', 7), -- Rome (Alitalia, Czech Airlines)
-('PRG', 7), ('PRG', 1), -- Prague (Czech Airlines, British Airways)
-('VIE', 8), ('VIE', 9), -- Vienna (Austrian Airlines, Brussels Airlines)
-('BRU', 9), ('BRU', 10), -- Brussels (Brussels Airlines, LOT Polish Airlines)
-('WAW', 10), ('WAW', 3); -- Warsaw (LOT Polish Airlines, Lufthansa)
-
-
-
-
-INSERT INTO airport_airlines (airport_code, airline_id)
-VALUES
-('LHR', 1), ('LHR', 2), ('LHR', 3),
-('CDG', 2), ('CDG', 3), ('CDG', 4),
-('FRA', 3), ('FRA', 5),
-('AMS', 4), ('AMS', 5),
-('MAD', 5), ('MAD', 6),
-('ROM', 6), ('ROM', 7),
-('PRG', 7), ('PRG', 1),
-('VIE', 8), ('VIE', 9),
-('BRU', 9), ('BRU', 10),
-('WAW', 10), ('WAW', 3);
 INSERT INTO airlines (name, iata_code)
 VALUES
 ('British Airways', 'BA'),
@@ -196,11 +157,25 @@ VALUES
 ('Brussels Airlines', 'SN'),
 ('LOT Polish Airlines', 'LO');
 
+-- Insert data into airport_airlines (many-to-many) table
+INSERT INTO airport_airlines (airport_code, airline_id)
+VALUES
+('LHR', 1), ('LHR', 2), ('LHR', 3),
+('CDG', 2), ('CDG', 3), ('CDG', 4),
+('FRA', 3), ('FRA', 5),
+('AMS', 4), ('AMS', 5),
+('MAD', 5), ('MAD', 6),
+('ROM', 6), ('ROM', 7),
+('PRG', 7), ('PRG', 1),
+('VIE', 8), ('VIE', 9),
+('BRU', 9), ('BRU', 10),
+('WAW', 10), ('WAW', 3);
 
+-- Insert data into flights table
 INSERT INTO flights (flight_number, departure_airport, arrival_airport, departure_time, arrival_time, airline_id, aircraft_type)
 VALUES
 ('FL119', 'FRA', 'CGH', '2025-01-27 09:00:00', '2025-01-27 12:00:00', 3, 'A321'),
-('FL120', 'MAD', 'AMS', '2025-01-21 06:00:00', '2025-01-12 09:00:00', 4, 'B737'),
+('FL120', 'MAD', 'AMS', '2025-01-21 06:00:00', '2025-01-21 09:00:00', 4, 'B737'),
 ('FL123', 'LHR', 'CDG', '2025-01-10 08:00:00', '2025-01-10 09:30:00', 1, 'A320'),
 ('FL124', 'CDG', 'LHR', '2025-01-10 15:00:00', '2025-01-10 16:30:00', 2, 'B737'),
 ('FL125', 'LHR', 'FRA', '2025-01-11 09:00:00', '2025-01-11 11:00:00', 1, 'A320'),
@@ -220,6 +195,7 @@ VALUES
 ('FL139', 'FRA', 'MAD', '2025-01-18 16:00:00', '2025-01-18 19:00:00', 3, 'A320'),
 ('FL140', 'CDG', 'LHR', '2025-01-19 10:00:00', '2025-01-19 11:30:00', 2, 'B737');
 
+-- Archive table for flights
 CREATE TABLE IF NOT EXISTS flights_archive (
     flight_id INT PRIMARY KEY,
     flight_number VARCHAR(10) NOT NULL,
@@ -235,6 +211,7 @@ CREATE TABLE IF NOT EXISTS flights_archive (
     FOREIGN KEY (airline_id) REFERENCES airlines(airline_id)
 );
 
+-- Archive table for users
 CREATE TABLE IF NOT EXISTS users_archive (
     user_id INT PRIMARY KEY,
     login VARCHAR(50) UNIQUE NOT NULL,
